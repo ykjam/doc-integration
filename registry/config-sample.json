@@ -1,0 +1,8 @@
+{
+	"db_conn": "user=test password=test dbname=test sslmode=disable",
+	"endpoint_url": "http://127.0.0.1:5080",
+	"listen_address": "127.0.0.1:5080",
+	"allowed_referrers": [
+		"localhost"
+	]
+}

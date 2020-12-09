@@ -1,0 +1,137 @@
+openapi: 3.0.0
+info:
+  description: API for Doc Registry
+  version: 1.0.0
+  title: Doc Registry API
+  contact:
+    email: hello@ykjam.tm
+  license:
+    name: MIT
+paths:
+  /api/organization:
+    get:
+      tags:
+        - Organization
+      summary: Get list of organizations
+      description: >-
+        List of organizations containing URLs and public keys
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationListResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/error_server_error_response'
+    post:
+      tags:
+        - Organization
+      summary: Get list of organizations, same as get
+      description: >-
+        List of organizations containing URLs and public keys
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationListResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/error_server_error_response'
+components:
+  schemas:
+    Organization:
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Edara 1
+        url:
+          type: string
+          description: full url of interopertion endpoint, protocol + domain name of organization doc installation + relative url
+          example: https://edara.example.com/api/document/receive
+        public_key:
+          type: string
+          description: public key in PEM format by which to check documents received from this organization
+    OrganizationList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Organization'
+    OrganizationListData:
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationList'
+    OrganizationListResponse:
+      allOf:
+        - $ref: '#/components/schemas/SuccessResponse'
+        - $ref: '#/components/schemas/OrganizationListData'
+    SuccessResponse:
+      properties:
+        success:
+          type: boolean
+          example: true
+    ErrorResponse:
+      properties:
+        success:
+          type: boolean
+          example: false
+  responses:
+    success_response:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SuccessResponse'
+    error_bad_input_response:
+      description: Bad input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_not_found_response:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_forbidden_response:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_server_error_response:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_unathorized_response:
+      description: Unathorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_too_large_response:
+      description: Entity too large
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_conflict_response:
+      description: Conflict, already exists on server
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'

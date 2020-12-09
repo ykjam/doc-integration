@@ -1,0 +1,245 @@
+openapi: 3.0.0
+info:
+  description: API for sending and receiving documents between DMSs (Document Management System).
+  version: 1.0.0
+  title: Doc Integration API
+  contact:
+    email: hello@ykjam.tm
+  license:
+    name: MIT
+paths:
+  /api/document/receive:
+    post:
+      tags:
+        - Inter-organization
+      summary: Receive document from another organization
+      parameters:
+        - in: header
+          name: "X-Organization"
+          description: "organization name, must exactly match the one in registry"
+          required: true
+          schema:
+            type: string
+            example: Edara 1
+        - in: header
+          name: "X-Signature"
+          description: |
+            signature for the current document (all info about document and the file itself should be signed).  RSA PKCS #1 v1.5 with SHA256 hash function. `EncodeBase64(SignPKCS1v15(private_key, Hash(data, hash_type.SHA_256), hash_type.SHA_256))`
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/DocumentReceiveRequest'
+        required: true
+      responses:
+        '200':
+          description: Document received successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '400':
+          description: Provided request data is not valid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/error_not_found_response'
+        '403':
+          description: Forbidden, invalid signature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/error_unathorized_response'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/responses/error_server_error_response'
+components:
+  schemas:
+    DocumentReceiveRequest:
+      properties:
+        file:
+          type: string
+          format: binary
+          description: document file itself
+          example: document file binary
+        json:
+          $ref: '#/components/schemas/DocumentReceiveJson'
+    DocumentReceiveJson:
+      description: JSON encoded data about document
+      properties:
+        sender_type:
+          type: string
+          enum:
+            - individual
+            - legal_entity
+          example: individual
+        exit_date:
+          type: integer
+          description: time in epoch, without time zone, int64
+          example: 1587634067
+        exit_no:
+          type: string
+          example: H4/253
+        sender:
+          type: string
+          example: Edara
+        receiver:
+          type: string
+          example: Edara (receiving)
+        sign_name:
+          type: string
+          description: Name of the person who signed the document
+          example: A.Amanow
+        sign_position:
+          type: string
+          description: Position of the person who signed the document
+          example: Başlyk
+        exec_name:
+          type: string
+          description: Name of the person who prepared the document
+          example: Hünärmen
+          nullable: true
+        exec_contact:
+          type: string
+          description: Contacts of the person who prepared the document
+          example: '99312123456'
+          nullable: true
+        description:
+          type: string
+          example: Tender barada
+        file:
+          type: string
+          example: filename.pdf
+        forwarded:
+          type: boolean
+          description: was that document forwarded to us?
+          example: true
+        forward_meta:
+          type: array
+          description: metadata of forward history
+          items:
+            type: object
+            properties:
+              sender_org:
+                type: string
+                example: Edara
+              sender_name:
+                type: string
+                example: M.Mekanow
+              sender_position:
+                type: string
+                example: Başlygyň orunbasary
+              receiver_org:
+                type: string
+                example: Edara (kabul edýän)
+              exit_no:
+                type: string
+                description: exit_no of OUT document created for forwarding
+                example: H/32
+              exit_date:
+                type: integer
+                description: time in epoch, without time zone, int64
+                example: 1587634067
+              message:
+                type: string
+                example: Bellenen tertipde seretmegiňizi haýyş edýärin
+              create_ts:
+                type: integer
+                description: time in epoch, without time zone, int64
+                example: 1587634067
+          nullable: true
+    SuccessResponse:
+      properties:
+        success:
+          type: boolean
+          example: true
+    ErrorResponse:
+      properties:
+        success:
+          type: boolean
+          example: false
+  responses:
+    success_response:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/SuccessResponse'
+    error_bad_input_response:
+      description: Bad input
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_not_found_response:
+      description: Not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_forbidden_response:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_invalid_response:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_server_error_response:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_unathorized_response:
+      description: Unathorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_too_large_response:
+      description: Entity too large
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_conflict_response:
+      description: 'Conflict, already exists on server'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_user_banned_response:
+      description: 'Too many otp attempts. User blocked'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_many_requests_response:
+      description: 'Too many otp attempts.'
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_tfa_response:
+      description: TFA required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    error_expired_response:
+      description: TFA expired
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
