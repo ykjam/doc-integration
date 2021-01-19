@@ -25,6 +25,7 @@ func (api *APIController) OrganizationList(ctx context.Context) (items []*entity
 		item := &entity.OrganizationListResponse{
 			Id:        organization.Id,
 			Name:      organization.Name,
+			Label:     organization.Label,
 			Url:       organization.Url,
 			PublicKey: organization.PublicKey,
 		}

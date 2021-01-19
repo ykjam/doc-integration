@@ -37,6 +37,7 @@ type OrganizationResponse struct {
 type OrganizationListResponse struct {
 	Id        int    `json:"id"`
 	Name      string `json:"name"`
+	Label     string `json:"label"`
 	Url       string `json:"url"`
 	PublicKey string `json:"public_key"`
 }
