@@ -23,14 +23,14 @@ func GetRemoteAddress(r *http.Request) string {
 }
 
 type Server struct {
-	c        *api.APIController
+	c *api.APIController
 }
 
 type httpPostWithLog func(ctx context.Context, w http.ResponseWriter, r *http.Request, clog *log.Entry)
 
 func NewServer(apiController *api.APIController) *Server {
 	return &Server{
-		c:        apiController,
+		c: apiController,
 	}
 }
 
@@ -57,24 +57,8 @@ func (s *Server) sendResponseByCode(w http.ResponseWriter, errCode int, clog *lo
 	switch errCode {
 	case api.ErrorCodeOK:
 		errMessage = api.ErrorMessageOK
-	case api.ErrorCodeTfaRequired:
-		errMessage = api.ErrorMessageTfaRequired
-	case api.ErrorCodeBadRequest:
-		errMessage = api.ErrorMessageBadRequest
-	case api.ErrorCodeFileSizeTooLarge:
-		errMessage = api.ErrorMessageFileSizeTooLarge
-	case api.ErrorCodeUnauthorized:
-		errMessage = api.ErrorMessageUnauthorized
-	case api.ErrorCodeForbidden:
-		errMessage = api.ErrorMessageForbidden
 	case api.ErrorCodeNotFound:
 		errMessage = api.ErrorMessageNotFound
-	case api.ErrorCodeExpired:
-		errMessage = api.ErrorMessageExpired
-	case api.ErrorCodeConflict:
-		errMessage = api.ErrorMessageConflict
-	case api.ErrorCodeTooManyRequests:
-		errMessage = api.ErrorMessageTooManyRequests
 	case api.ErrorCodeInternalServerError:
 		errMessage = api.ErrorMessageInternalServerError
 	}
@@ -111,24 +95,9 @@ func (s *Server) sendResponseByError(w http.ResponseWriter, err error, clog *log
 	case api.ErrBadRequest:
 		errCode = api.ErrorCodeBadRequest
 		errMessage = api.ErrorMessageBadRequest
-	case api.ErrFileSizeTooLarge:
-		errCode = api.ErrorCodeFileSizeTooLarge
-		errMessage = api.ErrorMessageFileSizeTooLarge
 	case api.ErrNotFound:
 		errCode = api.ErrorCodeNotFound
 		errMessage = api.ErrorMessageNotFound
-	case api.ErrForbidden:
-		errCode = api.ErrorCodeForbidden
-		errMessage = api.ErrorMessageForbidden
-	case api.ErrUnauthorized:
-		errCode = api.ErrorCodeUnauthorized
-		errMessage = api.ErrorMessageUnauthorized
-	case api.ErrExpired:
-		errCode = api.ErrorCodeExpired
-		errMessage = api.ErrorMessageExpired
-	case api.ErrConflict:
-		errCode = api.ErrorCodeConflict
-		errMessage = api.ErrorMessageConflict
 	}
 	w.WriteHeader(errCode)
 	resp := api.GeneralResponse{

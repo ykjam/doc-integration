@@ -55,8 +55,13 @@ components:
           type: integer
           example: 1
         name:
+          description: key for organization name, only ascii chars are allowed
           type: string
           example: Edara 1
+        label:
+          description: full organization name, can contain unicode chars
+          type: string
+          example: Edara, Müdirlik
         url:
           type: string
           description: full url of interopertion endpoint, protocol + domain name of organization doc installation + relative url
@@ -87,50 +92,8 @@ components:
           type: boolean
           example: false
   responses:
-    success_response:
-      description: OK
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/SuccessResponse'
-    error_bad_input_response:
-      description: Bad input
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    error_not_found_response:
-      description: Not found
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    error_forbidden_response:
-      description: Forbidden
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
     error_server_error_response:
       description: Internal server error
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    error_unathorized_response:
-      description: Unathorized
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    error_too_large_response:
-      description: Entity too large
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ErrorResponse'
-    error_conflict_response:
-      description: Conflict, already exists on server
       content:
         application/json:
           schema:
