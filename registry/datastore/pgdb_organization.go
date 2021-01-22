@@ -14,13 +14,13 @@ import (
 )
 
 const (
-	sqlOrganizationAdd    = `INSERT INTO tbl_organization(name, label, url, public_key, state, create_ts, update_ts, version) VALUES($1, $2, $3, $4, $5, $6, $7)`
-	sqlOrganizationUpdate = `UPDATE tbl_organization SET name=$3, label=$4, url=$5, public_key=$6, state=$7, update_ts=$8, version=$9 WHERE id=$1 AND version=$2`
-	sqlOrganizationById   = `SELECT id, name, label, url, public_key, state, create_ts, update_ts, version FROM tbl_organization WHERE id=$1 AND state!=$2`
-	sqlOrganizationByList = `SELECT id, name, label, url, public_key, state, create_ts, update_ts, version FROM tbl_organization WHERE state!=$1 ORDER BY id ASC`
+	sqlOrganizationAdd    = `INSERT INTO tbl_organization(name, label, type, url, public_key, state, create_ts, update_ts, version) VALUES($1, $2, $3, $4, $5, $6, $7, $8)`
+	sqlOrganizationUpdate = `UPDATE tbl_organization SET name=$3, label=$4, type=$5, url=$6, public_key=$7, state=$8, update_ts=$9, version=$10 WHERE id=$1 AND version=$2`
+	sqlOrganizationById   = `SELECT id, name, label, type, url, public_key, state, create_ts, update_ts, version FROM tbl_organization WHERE id=$1 AND state!=$2`
+	sqlOrganizationByList = `SELECT id, name, label, type, url, public_key, state, create_ts, update_ts, version FROM tbl_organization WHERE state!=$1 ORDER BY id ASC`
 )
 
-func (d *PgAccess) organizationAddAtomic(ctx context.Context, pTx pgx.Tx, name, label, url, publicKey string, state entity.EntityState) (item *entity.Organization, err error) {
+func (d *PgAccess) organizationAddAtomic(ctx context.Context, pTx pgx.Tx, name, label string, dmsType entity.DMSType, url, publicKey string, state entity.EntityState) (item *entity.Organization, err error) {
 	clog := log.WithFields(log.Fields{
 		"method": "PgAccess.organizationAddAtomic",
 	})
@@ -29,6 +29,7 @@ func (d *PgAccess) organizationAddAtomic(ctx context.Context, pTx pgx.Tx, name, 
 		item = &entity.Organization{
 			Name:      name,
 			Label:     label,
+			Type:      dmsType,
 			Url:       url,
 			PublicKey: publicKey,
 			State:     state,
@@ -36,9 +37,9 @@ func (d *PgAccess) organizationAddAtomic(ctx context.Context, pTx pgx.Tx, name, 
 			UpdateTs:  now,
 			Version:   0,
 		}
-		//sqlOrganizationAdd = `INSERT INTO tbl_organization(id, name, label, url, public_key, state, create_ts, update_ts, version) VALUES($1, $2, $3, $4, $5, $6, $7)`
+		//	sqlOrganizationAdd    = `INSERT INTO tbl_organization(name, label, type, url, public_key, state, create_ts, update_ts, version) VALUES($1, $2, $3, $4, $5, $6, $7, $8)`
 		var cmdTag pgconn.CommandTag
-		cmdTag, err = tx.Exec(ctx, sqlOrganizationAdd, item.Name, item.Label, item.Url, item.PublicKey, item.State, item.CreateTs, item.UpdateTs, item.Version)
+		cmdTag, err = tx.Exec(ctx, sqlOrganizationAdd, item.Name, item.Label, item.Type, item.Url, item.PublicKey, item.State, item.CreateTs, item.UpdateTs, item.Version)
 		if err != nil {
 			eMsg := "error in sqlOrganizationAdd"
 			clog.WithError(err).Error(eMsg)
@@ -61,16 +62,16 @@ func (d *PgAccess) organizationAddAtomic(ctx context.Context, pTx pgx.Tx, name, 
 	}
 	return
 }
-func (d *PgAccess) organizationUpdateAtomic(ctx context.Context, pTx pgx.Tx, item *entity.Organization, name, label, url, publicKey string, state entity.EntityState) (err error) {
+func (d *PgAccess) organizationUpdateAtomic(ctx context.Context, pTx pgx.Tx, item *entity.Organization, name, label string, dmsType entity.DMSType, url, publicKey string, state entity.EntityState) (err error) {
 	clog := log.WithFields(log.Fields{
 		"method": "PgAccess.organizationUpdateAtomic",
 	})
 	err = d.runInTx(ctx, pTx, clog, func(tx pgx.Tx) (rollback bool, err error) {
 		now := time.Now().UTC().Round(time.Microsecond)
 		nv := newVersion(item.Version)
-		//sqlOrganizationUpdate = `UPDATE tbl_organization SET name=$3, url=$4, public_key=$5, state=$6, update_ts=$7, version=$8 WHERE id=$1 AND version=$2`
+		// sqlOrganizationUpdate = `UPDATE tbl_organization SET name=$3, label=$4, type=$5, url=$6, public_key=$7, state=$8, update_ts=$9, version=$10 WHERE id=$1 AND version=$2`
 		var cmdTag pgconn.CommandTag
-		cmdTag, err = tx.Exec(ctx, sqlOrganizationUpdate, item.Id, item.Version, name, label, url, publicKey, state, now, nv)
+		cmdTag, err = tx.Exec(ctx, sqlOrganizationUpdate, item.Id, item.Version, name, label, dmsType, url, publicKey, state, now, nv)
 		if err != nil {
 			eMsg := "error in sqlOrganizationUpdate"
 			clog.WithError(err).Error(eMsg)
@@ -87,6 +88,7 @@ func (d *PgAccess) organizationUpdateAtomic(ctx context.Context, pTx pgx.Tx, ite
 		}
 		item.Name = name
 		item.Label = label
+		item.Type = dmsType
 		item.Url = url
 		item.PublicKey = publicKey
 		item.State = state
@@ -100,7 +102,7 @@ func (d *PgAccess) organizationUpdateAtomic(ctx context.Context, pTx pgx.Tx, ite
 	}
 	return
 }
-func (d *PgAccess) OrganizationAdd(ctx context.Context, pTx pgx.Tx, name, label, url, publicKey string) (item *entity.Organization, err error) {
+func (d *PgAccess) OrganizationAdd(ctx context.Context, pTx pgx.Tx, name, label string, dmsType entity.DMSType, url, publicKey string) (item *entity.Organization, err error) {
 	clog := log.WithFields(log.Fields{
 		"method": "PgAccess.OrganizationAdd",
 	})
@@ -110,7 +112,7 @@ func (d *PgAccess) OrganizationAdd(ctx context.Context, pTx pgx.Tx, name, label,
 				item = nil
 			}
 		}()
-		item, err = d.organizationAddAtomic(ctx, tx, name, label, url, publicKey, entity.EntityStateEnabled)
+		item, err = d.organizationAddAtomic(ctx, tx, name, label, dmsType, url, publicKey, entity.EntityStateEnabled)
 		if err != nil {
 			eMsg := "error in d.organizationAddAtomic"
 			clog.WithError(err).Error(eMsg)
@@ -122,12 +124,12 @@ func (d *PgAccess) OrganizationAdd(ctx context.Context, pTx pgx.Tx, name, label,
 	})
 	return
 }
-func (d *PgAccess) OrganizationUpdate(ctx context.Context, pTx pgx.Tx, item *entity.Organization, name, label, url, publicKey string) (err error) {
+func (d *PgAccess) OrganizationUpdate(ctx context.Context, pTx pgx.Tx, item *entity.Organization, name, label string, dmsType entity.DMSType, url, publicKey string) (err error) {
 	clog := log.WithFields(log.Fields{
 		"method": "PgAccess.OrganizationUpdate",
 	})
 	err = d.runInTx(ctx, pTx, clog, func(tx pgx.Tx) (rollback bool, err error) {
-		err = d.organizationUpdateAtomic(ctx, tx, item, name, label, url, publicKey, item.State)
+		err = d.organizationUpdateAtomic(ctx, tx, item, name, label, dmsType, url, publicKey, item.State)
 		if err != nil {
 			eMsg := "error in d.organizationUpdateAtomic"
 			clog.WithError(err).Error(eMsg)
@@ -148,7 +150,7 @@ func (d *PgAccess) OrganizationChangeState(ctx context.Context, pTx pgx.Tx, item
 		"method": "PgAccess.OrganizationChangeState",
 	})
 	err = d.runInTx(ctx, pTx, clog, func(tx pgx.Tx) (rollback bool, err error) {
-		err = d.organizationUpdateAtomic(ctx, tx, item, item.Name, item.Label, item.Url, item.PublicKey, state)
+		err = d.organizationUpdateAtomic(ctx, tx, item, item.Name, item.Label, item.Type, item.Url, item.PublicKey, state)
 		if err != nil {
 			eMsg := "error in d.organizationUpdateAtomic"
 			clog.WithError(err).Error(eMsg)
@@ -175,9 +177,9 @@ func (d *PgAccess) OrganizationById(ctx context.Context, id int) (item *entity.O
 			}
 		}()
 		item = &entity.Organization{}
-		//sqlOrganizationById = `SELECT id, name, label, url, public_key, state, create_ts, update_ts, version FROM tbl_organization WHERE id=$1 AND state!=$2`
+		//sqlOrganizationById = `SELECT id, name, label, type, url, public_key, state, create_ts, update_ts, version FROM tbl_organization WHERE id=$1 AND state!=$2`
 		row := conn.QueryRow(ctx, sqlOrganizationById, id, entity.EntityStateDeleted)
-		err = row.Scan(&item.Id, &item.Name, &item.Label, &item.Url, &item.PublicKey, &item.State, &item.CreateTs, &item.UpdateTs, &item.Version)
+		err = row.Scan(&item.Id, &item.Name, &item.Label, &item.Type, &item.Url, &item.PublicKey, &item.State, &item.CreateTs, &item.UpdateTs, &item.Version)
 		if err != nil {
 			if err == pgx.ErrNoRows {
 				err = nil
@@ -208,7 +210,7 @@ func (d *PgAccess) OrganizationList(ctx context.Context) (items []*entity.Organi
 			}
 		}()
 		items = make([]*entity.Organization, 0)
-		//sqlOrganizationByList = `SELECT id, name, label, url, public_key, state, create_ts, update_ts, version FROM tbl_organization WHERE state!=$1 ORDER BY id ASC`
+		//sqlOrganizationByList = `SELECT id, name, label, type, url, public_key, state, create_ts, update_ts, version FROM tbl_organization WHERE state!=$1 ORDER BY id ASC`
 		rows, err := conn.Query(ctx, sqlOrganizationByList, entity.EntityStateDeleted)
 		if err != nil {
 			eMsg := "error in sqlOrganizationByList"
@@ -218,7 +220,7 @@ func (d *PgAccess) OrganizationList(ctx context.Context) (items []*entity.Organi
 		}
 		for rows.Next() {
 			item := &entity.Organization{}
-			err = rows.Scan(&item.Id, &item.Name, &item.Label, &item.Url, &item.PublicKey, &item.State, &item.CreateTs, &item.UpdateTs, &item.Version)
+			err = rows.Scan(&item.Id, &item.Name, &item.Label, &item.Type, &item.Url, &item.PublicKey, &item.State, &item.CreateTs, &item.UpdateTs, &item.Version)
 			if err != nil {
 				eMsg := "error in rows.Scan"
 				clog.WithError(err).Error(eMsg)

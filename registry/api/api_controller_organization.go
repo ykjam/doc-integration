@@ -26,6 +26,7 @@ func (api *APIController) OrganizationList(ctx context.Context) (items []*entity
 			Id:        organization.Id,
 			Name:      organization.Name,
 			Label:     organization.Label,
+			Type:      organization.Type,
 			Url:       organization.Url,
 			PublicKey: organization.PublicKey,
 		}

@@ -2,11 +2,14 @@
 
 CREATE TYPE entity_state_t AS ENUM ('ENABLED', 'DISABLED', 'DELETED');
 
+CREATE TYPE dms_type_t AS ENUM ('SRD', 'Netije', 'eResminama');
+
 CREATE TABLE tbl_organization
 (
     id         serial PRIMARY KEY,
     name       VARCHAR(300)                NOT NULL,
     label      VARCHAR(512)                NOT NULL,
+    type       dms_type_t                  NOT NULL,
     url        VARCHAR(900)                NOT NULL,
     public_key TEXT                        NOT NULL,
     state      entity_state_t              NOT NULL,
